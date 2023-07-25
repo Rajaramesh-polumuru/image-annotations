@@ -46,6 +46,10 @@ button {
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 button:hover {
   border-color: #646cff;
