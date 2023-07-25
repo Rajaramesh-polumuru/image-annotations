@@ -4,12 +4,11 @@ import useImage from "use-image";
 import { images } from "../dummy-data/imageData";
 
 const BackgroundImage = memo(({ imageIndex }: { imageIndex: number }) => {
- 
   const [image] = useImage(images[imageIndex]);
 
   if (!image) return null;
 
-  const scaleWidth = 600 / image.width;
+  const scaleWidth = 900 / image.width;
   const scaleHeight = 600 / image.height;
   const scale = Math.min(scaleWidth, scaleHeight);
 

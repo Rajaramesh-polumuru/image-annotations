@@ -9,8 +9,8 @@
 }
 .canvas__wrapper {
   position: relative;
-  width: 600px;
-  height: 500px;
+  width: 900px;
+  height: 600px;
 }
 .buttons__wrapper {
   display: flex;
