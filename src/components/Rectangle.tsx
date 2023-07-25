@@ -53,12 +53,12 @@ const Rectangle: React.FC<RectangleProps> = ({
 
 
 //#region [Drag and Drop]
-  const handleDragStart = (e: any) => {
+  const handleDragStart = () => {
     setSelected(true);
     setIsInteracting(true);
   };
 
-  const handleDragEnd = (e: any) => {
+  const handleDragEnd = () => {
     const node = shapeRef.current;
     const newRectangles = rectangles?.map((rect, index) =>
       id === index.toString()
@@ -120,7 +120,7 @@ const Rectangle: React.FC<RectangleProps> = ({
           setIsInteracting(true);
           setCurrentFirstPoint(null);
         }}
-        onTransform={(e) => {
+        onTransform={() => {
           setIsInteracting(true);
           setCurrentFirstPoint(null);
         }}
