@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { MouseEvent, useEffect, useRef, useState } from "react";
+import {
+  MouseEvent,
+  TouchEventHandler,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Layer, Stage } from "react-konva";
 import useImage from "use-image";
 import { images } from "./dummy-data/imageData";
@@ -43,7 +49,7 @@ function App() {
   //#endregion [Image]
 
   //#region [Scale]
-  const scaleWidth = 600 / (image?.width || 1);
+  const scaleWidth = 900 / (image?.width || 1);
   const scaleHeight = 600 / (image?.height || 1);
   const scale = Math.min(scaleWidth, scaleHeight);
   const stageWidth = (image?.width || 1) * scale;
@@ -51,12 +57,12 @@ function App() {
   //#endregion [Scale]
 
   //#region [Event handlers]
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = (e: MouseEvent | TouchEvent) => {
     if (currentFirstPoint && isDrawing && !isInteracting) {
       const left = containerRef?.current?.getBoundingClientRect().left || 0;
       const top = containerRef?.current?.getBoundingClientRect().top || 0;
-      const x = e.clientX - left;
-      const y = e.clientY - top;
+      const x = "clientX" in e ? e.clientX - left : e.touches[0].clientX - left;
+      const y = "clientY" in e ? e.clientY - top : e.touches[0].clientY - top;
       setTempRectangle({
         x1: currentFirstPoint.x,
         y1: currentFirstPoint.y,
@@ -66,12 +72,16 @@ function App() {
     }
   };
 
-  const handleMouseUp = (e: MouseEvent) => {
+  const handleMouseUp = (e: MouseEvent | TouchEvent) => {
     if (currentFirstPoint && !isInteracting && isDrawing) {
       const left = containerRef?.current?.getBoundingClientRect().left || 0;
       const top = containerRef?.current?.getBoundingClientRect().top || 0;
-      const x = e.clientX - left;
-      const y = e.clientY - top;
+
+      const x =
+        "clientX" in e ? e.clientX - left : e.changedTouches[0].clientX - left;
+      const y =
+        "clientY" in e ? e.clientY - top : e.changedTouches[0].clientY - top;
+
       if (
         Math.abs(x - currentFirstPoint.x) > 10 &&
         Math.abs(y - currentFirstPoint.y) > 10
@@ -92,13 +102,13 @@ function App() {
     }
   };
 
-  const handleMouseDown = (e: MouseEvent) => {
+  const handleMouseDown = (e: MouseEvent | TouchEvent) => {
     if (isInteracting) return;
     e.stopPropagation();
     const left = containerRef?.current?.getBoundingClientRect().left || 0;
     const top = containerRef?.current?.getBoundingClientRect().top || 0;
-    const x = e.clientX - left;
-    const y = e.clientY - top;
+    const x = "clientX" in e ? e.clientX - left : e.touches[0]?.clientX - left;
+    const y = "clientY" in e ? e.clientY - top : e.touches[0]?.clientY - top;
     setCurrentFirstPoint({ x, y });
     setIsDrawing(true);
   };
@@ -110,7 +120,8 @@ function App() {
     return () => {
       clearTimeout(timerRef.current);
     };
-  }, [imageIndex, savedRectangles]);
+  }, [imageIndex]);
+
   //#endregion [Effect]
 
   //#region [Helpers]
@@ -134,13 +145,19 @@ function App() {
     }, 5000);
   };
   //#endregion [Helpers]
-
   return (
     <div
       className="App"
       onMouseUp={handleMouseUp}
       onMouseDown={handleMouseDown}
+      onTouchEnd={handleMouseUp as unknown as TouchEventHandler<HTMLDivElement>}
+      onTouchStart={
+        handleMouseDown as unknown as TouchEventHandler<HTMLDivElement>
+      }
       onMouseMove={handleMouseMove}
+      onTouchMove={
+        handleMouseMove as unknown as TouchEventHandler<HTMLDivElement>
+      }
       ref={containerRef}
     >
       <div className="canvas__wrapper">
@@ -185,8 +202,10 @@ function App() {
       <div className="buttons__wrapper">
         <button
           onClick={() => {
-            setImageIndex((prev) => (prev + 1) % images.length);
+            setImageIndex((prev) => prev - 1);
+            setIsInteracting(false);
           }}
+          disabled={imageIndex === 0}
         >
           Previous Image
         </button>
@@ -202,7 +221,9 @@ function App() {
         <button
           onClick={() => {
             setImageIndex((prev) => (prev + 1) % images.length);
+            setIsInteracting(false);
           }}
+          disabled={imageIndex === images.length - 1}
         >
           Next Image
         </button>
