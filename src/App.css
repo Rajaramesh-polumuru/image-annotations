@@ -1,0 +1,20 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+.App {
+  display: grid;
+}
+.canvas__wrapper {
+  position: relative;
+  width: 600px;
+  height: 500px;
+}
+.buttons__wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 10px;
+}
