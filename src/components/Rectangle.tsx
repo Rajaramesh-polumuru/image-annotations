@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { Rect, Transformer } from "react-konva";
 
 interface RectangleProps {
@@ -30,18 +30,18 @@ const Rectangle: React.FC<RectangleProps> = ({
   setRectangles,
   setCurrentFirstPoint,
   setSelectedRectId,
-  isSelected: initialSelectionState,
+  isSelected,
 }) => {
   //#region [State]
-  const [isSelected, setSelected] = useState(initialSelectionState);
+  // const [isSelected, setSelected] = useState(initialSelectionState);
   //#endregion [State]
-  
+
   //#region [Ref]
   const shapeRef = useRef<any>(null);
   const trRef = useRef<any>(null);
   //#endregion [Ref]
 
-//#region [Effect]
+  //#region [Effect]
   useEffect(() => {
     if (isSelected) {
       trRef?.current?.nodes([shapeRef.current]);
@@ -49,17 +49,17 @@ const Rectangle: React.FC<RectangleProps> = ({
       setSelectedRectId(id);
     }
   }, [id, isSelected, setSelectedRectId]);
-//#endregion [Effect]
+  //#endregion [Effect]
 
-
-//#region [Drag and Drop]
+  //#region [Drag and Drop]
   const handleDragStart = () => {
-    setSelected(true);
+    // setSelected(true);
     setIsInteracting(true);
   };
 
   const handleDragEnd = () => {
     const node = shapeRef.current;
+
     const newRectangles = rectangles?.map((rect, index) =>
       id === index.toString()
         ? {
@@ -74,26 +74,31 @@ const Rectangle: React.FC<RectangleProps> = ({
     setCurrentFirstPoint(null);
     setRectangles(newRectangles);
   };
-//#endregion [Drag and Drop]
+  //#endregion [Drag and Drop]
 
-
-//#region [Transform]
+  //#region [Transform]
   const handleTransformEnd = () => {
     const node = shapeRef.current;
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
 
-    const newRectangles = rectangles.map((rect, index) =>
-      id === index.toString()
-        ? {
-            x1: node.x(),
-            y1: node.y(),
-            x2: node.x() + node.width(),
-            y2: node.y() + node.height(),
-          }
-        : rect
-    );
-    setRectangles(newRectangles);
+    node.scaleX(1);
+    node.scaleY(1);
+    
+    const width = Math.max(5, node.width() * scaleX);
+    const height = Math.max(node.height() * scaleY);
+
+    const rects = rectangles.slice();
+
+    rects[Number(id)] = {
+      x1: node.x(),
+      y1: node.y(),
+      x2: node.x() + width,
+      y2: node.y() + height,
+    };
+    setRectangles(rects);
   };
-//#endregion [Transform]
+  //#endregion [Transform]
 
   return (
     <>
@@ -112,11 +117,11 @@ const Rectangle: React.FC<RectangleProps> = ({
         ref={shapeRef}
         onClick={(e) => {
           e.cancelBubble = true;
-          setSelected(true);
+          setSelectedRectId(id);
         }}
         onTap={(e) => {
           e.cancelBubble = true;
-          setSelected(true);
+          setSelectedRectId(id);
           setIsInteracting(true);
           setCurrentFirstPoint(null);
         }}
