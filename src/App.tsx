@@ -167,7 +167,7 @@ function App() {
   //#endregion [Helpers]
   return (
     <div className="main__container">
-      <ToastContainer />
+      <ToastContainer position={toast.POSITION.BOTTOM_RIGHT} />
       <div
         className="canvas__container"
         onMouseUp={handleMouseUp}
@@ -240,7 +240,9 @@ function App() {
             </Layer>
           </Stage>
         </div>
-        <div>Image {`${imageIndex + 1}/${images.length}`}</div>
+        <div className="image__count">{`${imageIndex + 1}/${
+          images.length
+        }`}</div>
         <div className="buttons__wrapper">
           <button
             onClick={() => {
