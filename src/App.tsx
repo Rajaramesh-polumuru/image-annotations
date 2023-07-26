@@ -12,12 +12,26 @@ import { images } from "./dummy-data/imageData";
 import "./App.css";
 import Rectangle from "./components/Rectangle";
 import BackgroundImage from "./components/BackgroundImage";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import "react-toastify/dist/ReactToastify.css";
+import {
+  faCheck,
+  faCheckCircle,
+  faCircle,
+  faEye,
+  faEyeSlash,
+  faTrash,
+  faTriangleExclamation,
+} from "@fortawesome/free-solid-svg-icons";
+import { ToastContainer, toast } from "react-toastify";
 
 export interface RectangleObj {
   x1: number;
   y1: number;
   x2: number;
   y2: number;
+  hide?: boolean;
+  name?: string;
 }
 
 function App() {
@@ -33,9 +47,10 @@ function App() {
   } | null>(null);
   const [tempRectangle, setTempRectangle] = useState<RectangleObj | null>(null);
   const [selectedRectId, setSelectedRectId] = useState<string | null>(null);
-  const [showMessage, setShowMessage] = useState<boolean>(false);
+
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [isInteracting, setIsInteracting] = useState<boolean>(false);
+  const [isSaved, setIsSaved] = useState<boolean>();
   //#endregion [State]
 
   //#region [Ref]
@@ -95,6 +110,7 @@ function App() {
             y2: y,
           },
         ]);
+        setIsSaved(false);
       }
       setCurrentFirstPoint(null);
       setIsDrawing(false);
@@ -120,7 +136,7 @@ function App() {
     return () => {
       clearTimeout(timerRef.current);
     };
-  }, [imageIndex]);
+  }, [imageIndex, savedRectangles]);
 
   //#endregion [Effect]
 
@@ -139,102 +155,247 @@ function App() {
       scaleHeight,
       scaledRectangles: rectangles,
     });
-    setShowMessage(true);
-    timerRef.current = setTimeout(() => {
-      setShowMessage(false);
-    }, 5000);
+    toast.success("Logged coordinates to console!");
   };
   //#endregion [Helpers]
   return (
-    <div
-      className="App"
-      onMouseUp={handleMouseUp}
-      onMouseDown={handleMouseDown}
-      onTouchEnd={handleMouseUp as unknown as TouchEventHandler<HTMLDivElement>}
-      onTouchStart={
-        handleMouseDown as unknown as TouchEventHandler<HTMLDivElement>
-      }
-      onMouseMove={handleMouseMove}
-      onTouchMove={
-        handleMouseMove as unknown as TouchEventHandler<HTMLDivElement>
-      }
-      ref={containerRef}
-    >
-      <div className="canvas__wrapper">
-        <Stage width={stageWidth} height={stageHeight} ref={stageRef}>
-          <Layer>
-            <BackgroundImage imageIndex={imageIndex} />
-            {tempRectangle && (
-              <Rectangle
-                x={tempRectangle.x1}
-                y={tempRectangle.y1}
-                width={Math.abs(tempRectangle.x2 - tempRectangle.x1)}
-                height={Math.abs(tempRectangle.y2 - tempRectangle.y1)}
-                setIsInteracting={() => {}}
-                rectangles={rectangles}
-                setRectangles={() => {}}
-                id={"temp"}
-                setCurrentFirstPoint={() => {}}
-                setSelectedRectId={() => {}}
-                isSelected={false}
-              />
+    <div className="main__container">
+      <ToastContainer />
+      <div
+        className="canvas__container"
+        onMouseUp={handleMouseUp}
+        onMouseDown={handleMouseDown}
+        onTouchEnd={
+          handleMouseUp as unknown as TouchEventHandler<HTMLDivElement>
+        }
+        onTouchStart={
+          handleMouseDown as unknown as TouchEventHandler<HTMLDivElement>
+        }
+        onMouseMove={handleMouseMove}
+        onTouchMove={
+          handleMouseMove as unknown as TouchEventHandler<HTMLDivElement>
+        }
+        ref={containerRef}
+      >
+        <div className="canvas__wrapper">
+          <Stage width={stageWidth} height={stageHeight} ref={stageRef}>
+            <Layer>
+              <BackgroundImage imageIndex={imageIndex} />
+              {tempRectangle && (
+                <Rectangle
+                  x={tempRectangle.x1}
+                  y={tempRectangle.y1}
+                  width={tempRectangle.x2 - tempRectangle.x1}
+                  height={tempRectangle.y2 - tempRectangle.y1}
+                  setIsInteracting={() => {}}
+                  rectangles={rectangles}
+                  setRectangles={() => {}}
+                  id={"temp"}
+                  setCurrentFirstPoint={() => {}}
+                  setSelectedRectId={() => {}}
+                  isSelected={false}
+                  setIsSaved={() => {}}
+                />
+              )}
+              {rectangles.map((rect, index) => (
+                <>
+                  {!rect.hide && (
+                    <Rectangle
+                      key={index}
+                      x={rect.x1}
+                      y={rect.y1}
+                      width={rect.x2 - rect.x1}
+                      height={rect.y2 - rect.y1}
+                      id={index.toString()}
+                      isSelected={
+                        selectedRectId?.toString() === index.toString()
+                      }
+                      setIsInteracting={setIsInteracting}
+                      rectangles={rectangles}
+                      setRectangles={setRectangles}
+                      setCurrentFirstPoint={setCurrentFirstPoint}
+                      setSelectedRectId={setSelectedRectId}
+                      setIsSaved={setIsSaved}
+                    />
+                  )}
+                </>
+              ))}
+            </Layer>
+          </Stage>
+        </div>
+        <div>Image {`${imageIndex + 1}/${images.length}`}</div>
+        <div className="buttons__wrapper">
+          <button
+            onClick={() => {
+              setImageIndex((prev) => prev - 1);
+              setIsInteracting(false);
+              setSelectedRectId(null);
+
+              if (isSaved !== undefined && !isSaved) {
+                toast.warning(
+                  "Please save your changes before moving to the previous image."
+                );
+                setIsSaved(undefined);
+              }
+            }}
+            disabled={imageIndex === 0}
+          >
+            Previous Image
+          </button>
+          <button
+            onClick={() => {
+              const newSavedRectangles = [...savedRectangles];
+              newSavedRectangles[imageIndex] = rectangles;
+              setSavedRectangles(newSavedRectangles);
+              toast.success("Saved!");
+              setIsSaved(true);
+            }}
+          >
+            Save
+          </button>
+          <button
+            onClick={() => {
+              setImageIndex((prev) => (prev + 1) % images.length);
+              setIsInteracting(false);
+              setSelectedRectId(null);
+              if (isSaved !== undefined && !isSaved) {
+                toast.warning(
+                  "Please save your changes before moving to the next image."
+                );
+                setIsSaved(undefined);
+              }
+            }}
+            disabled={imageIndex === images.length - 1}
+          >
+            Next Image
+          </button>
+        </div>
+      </div>
+      <div className="sidebar">
+        <div className="sidebar__content">
+          {/* <div className="sidebar__content__title">Annotations</div> */}
+          <div>{`Click and drag to draw a rectangle.`}</div>
+          <div className="sidebar__content__buttons">
+            <button
+              onClick={() => {
+                setIsSaved(false);
+                setRectangles([]);
+                toast.success("Cleared all Annotations!");
+              }}
+            >
+              Clear all annotations
+              <FontAwesomeIcon icon={faTrash} />
+            </button>
+            <button onClick={handleLogRectangles}>
+              Log annotation Coordinates
+            </button>
+            {isSaved !== undefined && (
+              <div className="sidebar__content__list__saved_state">
+                {isSaved ? (
+                  <>
+                    <FontAwesomeIcon icon={faCheck} color="green" />
+                    Saved
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon
+                      icon={faTriangleExclamation}
+                      color="yellow"
+                    />
+                    Unsaved changes
+                  </>
+                )}
+              </div>
             )}
+          </div>
+          <div className="sidebar__header">
+            <div className="sidebar__header__title">{`Image-${
+              imageIndex + 1
+            }`}</div>
+          </div>
+          <div className="sidebar__content__list">
             {rectangles.map((rect, index) => (
-              <Rectangle
+              <div
                 key={index}
-                x={rect.x1}
-                y={rect.y1}
-                width={Math.abs(rect.x2 - rect.x1)}
-                height={Math.abs(rect.y2 - rect.y1)}
-                id={index.toString()}
-                isSelected={selectedRectId?.toString() === index.toString()}
-                setIsInteracting={setIsInteracting}
-                rectangles={rectangles}
-                setRectangles={setRectangles}
-                setCurrentFirstPoint={setCurrentFirstPoint}
-                setSelectedRectId={setSelectedRectId}
-              />
+                className="sidebar__content__list__item"
+                onClick={() => {
+                  setIsInteracting(false);
+                  if (selectedRectId?.toString() === index.toString()) {
+                    setSelectedRectId(null);
+                  } else {
+                    setSelectedRectId(index.toString());
+                  }
+                }}
+              >
+                <div className="sidebar__content__list__item__index">
+                  <div className="sidebar__item__label_wrapper">
+                    <div className="sidebar__content__list__item__selected">
+                      {selectedRectId?.toString() === index.toString() ? (
+                        <FontAwesomeIcon icon={faCheckCircle} />
+                      ) : (
+                        <FontAwesomeIcon
+                          icon={faCircle}
+                          style={{ opacity: 0.25 }}
+                        />
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      className="sidebar__item__label_input"
+                      value={rect.name ?? `Selection-${index + 1}`}
+                      onChange={(e) => {
+                        const newRectangles = [...rectangles];
+                        newRectangles[index].name = e.target.value;
+                        setRectangles(newRectangles);
+                        setIsSaved(false);
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                    />
+                  </div>
+
+                  <div className="item__buttons__container">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newRectangles = [...rectangles];
+                        newRectangles[index].hide = !newRectangles[index].hide;
+
+                        setRectangles(newRectangles);
+                        setIsSaved(false);
+                      }}
+                      className="icon__button"
+                    >
+                      {rect.hide ? (
+                        <FontAwesomeIcon icon={faEye} />
+                      ) : (
+                        <FontAwesomeIcon icon={faEyeSlash} />
+                      )}
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newRectangles = [...rectangles];
+                        newRectangles.splice(index, 1);
+                        setRectangles(newRectangles);
+                        setIsSaved(false);
+                        toast.success(
+                          `Deleted ${rect.name ?? `Selection-${index + 1}`}`
+                        );
+                      }}
+                      className="icon__button"
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
-          </Layer>
-        </Stage>
+          </div>
+        </div>
       </div>
-      <div>Image {`${imageIndex + 1}/${images.length}`}</div>
-      <div className="buttons__wrapper">
-        <button
-          onClick={() => {
-            setImageIndex((prev) => prev - 1);
-            setIsInteracting(false);
-          }}
-          disabled={imageIndex === 0}
-        >
-          Previous Image
-        </button>
-        <button
-          onClick={() => {
-            const newSavedRectangles = [...savedRectangles];
-            newSavedRectangles[imageIndex] = rectangles;
-            setSavedRectangles(newSavedRectangles);
-          }}
-        >
-          Save
-        </button>
-        <button
-          onClick={() => {
-            setImageIndex((prev) => (prev + 1) % images.length);
-            setIsInteracting(false);
-          }}
-          disabled={imageIndex === images.length - 1}
-        >
-          Next Image
-        </button>
-      </div>
-      <div className="buttons__wrapper">
-        <button onClick={() => setRectangles([])}>Clear annotations</button>
-        <button onClick={handleLogRectangles}>
-          Log annotation Coordinates
-        </button>
-      </div>
-      {showMessage ? <div>Logged the rectangles in console</div> : <></>}
     </div>
   );
 }

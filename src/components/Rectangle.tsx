@@ -17,6 +17,7 @@ interface RectangleProps {
   setCurrentFirstPoint: React.Dispatch<React.SetStateAction<any>>;
   setSelectedRectId: React.Dispatch<React.SetStateAction<string | null>>;
   isSelected: boolean;
+  setIsSaved: React.Dispatch<React.SetStateAction<boolean | undefined>>;
 }
 
 const Rectangle: React.FC<RectangleProps> = ({
@@ -31,6 +32,7 @@ const Rectangle: React.FC<RectangleProps> = ({
   setCurrentFirstPoint,
   setSelectedRectId,
   isSelected,
+  setIsSaved,
 }) => {
   //#region [State]
   // const [isSelected, setSelected] = useState(initialSelectionState);
@@ -63,6 +65,7 @@ const Rectangle: React.FC<RectangleProps> = ({
     const newRectangles = rectangles?.map((rect, index) =>
       id === index.toString()
         ? {
+            ...rect,
             x1: node.x(),
             y1: node.y(),
             x2: node.x() + node.width(),
@@ -73,6 +76,7 @@ const Rectangle: React.FC<RectangleProps> = ({
     setIsInteracting(false);
     setCurrentFirstPoint(null);
     setRectangles(newRectangles);
+    setIsSaved(false);
   };
   //#endregion [Drag and Drop]
 
@@ -84,19 +88,21 @@ const Rectangle: React.FC<RectangleProps> = ({
 
     node.scaleX(1);
     node.scaleY(1);
-    
+
     const width = Math.max(5, node.width() * scaleX);
     const height = Math.max(node.height() * scaleY);
 
     const rects = rectangles.slice();
 
     rects[Number(id)] = {
+      ...rects[Number(id)],
       x1: node.x(),
       y1: node.y(),
       x2: node.x() + width,
       y2: node.y() + height,
     };
     setRectangles(rects);
+    setIsSaved(false);
   };
   //#endregion [Transform]
 
