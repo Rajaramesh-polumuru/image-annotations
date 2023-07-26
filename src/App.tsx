@@ -51,6 +51,7 @@ function App() {
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [isInteracting, setIsInteracting] = useState<boolean>(false);
   const [isSaved, setIsSaved] = useState<boolean>();
+  const [isImageLoading, setIsImageLoading] = useState<boolean>(false);
   //#endregion [State]
 
   //#region [Ref]
@@ -60,7 +61,7 @@ function App() {
   //#endregion [Ref]
 
   //#region [Image]
-  const [image] = useImage(images[imageIndex]);
+  let [image] = useImage(images[imageIndex]);
   //#endregion [Image]
 
   //#region [Scale]
@@ -133,10 +134,16 @@ function App() {
   //#region [Effect]
   useEffect(() => {
     setRectangles(savedRectangles[imageIndex] || []);
+    console.log(image);
+    if (image) {
+      setIsImageLoading(false);
+    } else {
+      setIsImageLoading(true);
+    }
     return () => {
       clearTimeout(timerRef.current);
     };
-  }, [imageIndex, savedRectangles]);
+  }, [imageIndex, savedRectangles, image]);
 
   //#endregion [Effect]
 
@@ -178,6 +185,16 @@ function App() {
         ref={containerRef}
       >
         <div className="canvas__wrapper">
+          {isImageLoading && (
+            <div className="image__loading">
+              <div className="spinner__square">
+                <div className="square__1 square"></div>
+                <div className="square__2 square"></div>
+                <div className="square__3 square"></div>
+              </div>
+              Loading...
+            </div>
+          )}
           <Stage width={stageWidth} height={stageHeight} ref={stageRef}>
             <Layer>
               <BackgroundImage imageIndex={imageIndex} />
@@ -230,6 +247,7 @@ function App() {
               setImageIndex((prev) => prev - 1);
               setIsInteracting(false);
               setSelectedRectId(null);
+              image = undefined;
 
               if (isSaved !== undefined && !isSaved) {
                 toast.warning(
@@ -258,6 +276,7 @@ function App() {
               setImageIndex((prev) => (prev + 1) % images.length);
               setIsInteracting(false);
               setSelectedRectId(null);
+              image = undefined;
               if (isSaved !== undefined && !isSaved) {
                 toast.warning(
                   "Please save your changes before moving to the next image."
