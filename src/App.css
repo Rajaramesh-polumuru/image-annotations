@@ -9,8 +9,8 @@
 }
 .canvas__wrapper {
   position: relative;
-  width: 900px;
-  height: 600px;
+  width: fit-content;
+  height: fit-content;
   display: flex;
   justify-content: center;
   align-items: center;
